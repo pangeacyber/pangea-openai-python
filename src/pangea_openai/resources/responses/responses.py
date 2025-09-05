@@ -48,11 +48,10 @@ from openai.types.shared_params.responses_model import ResponsesModel
 from pangea.services.ai_guard import Message
 from typing_extensions import assert_never, override
 
-from pangea_openai._client import AsyncPangeaOpenAI
 from pangea_openai._exceptions import PangeaAIGuardBlockedError
 
 if TYPE_CHECKING:
-    from pangea_openai._client import PangeaOpenAI
+    from pangea_openai._client import AsyncPangeaOpenAI, PangeaOpenAI
 
 __all__ = ("PangeaResponses", "AsyncPangeaResponses")
 
