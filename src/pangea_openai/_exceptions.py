@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-__all__ = ("PangeaAIGuardBlockedError",)
+__all__ = ("PangeaError", "PangeaAIGuardBlockedError")
 
 
-class PangeaAIGuardBlockedError(Exception):
+class PangeaError(Exception):
+    pass
+
+
+class PangeaAIGuardBlockedError(PangeaError):
     """Raised when Pangea AI Guard returns a blocked response."""
 
     def __init__(self, message: str = "Pangea AI Guard returned a blocked response.") -> None:
