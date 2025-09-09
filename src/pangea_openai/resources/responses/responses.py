@@ -46,6 +46,7 @@ from openai.types.shared_params.metadata import Metadata
 from openai.types.shared_params.reasoning import Reasoning
 from openai.types.shared_params.responses_model import ResponsesModel
 from pangea.services.ai_guard import Message
+from pydantic_core import to_jsonable_python
 from typing_extensions import assert_never, override
 
 from pangea_openai._exceptions import PangeaAIGuardBlockedError
@@ -899,8 +900,8 @@ class PangeaResponses(Responses):
         if guard_input_response.result.blocked:
             raise PangeaAIGuardBlockedError()
 
-        if guard_input_response.result.transformed and isinstance(guard_input_response.result.prompt_messages, list):
-            input = guard_input_response.result.prompt_messages
+        if guard_input_response.result.transformed and guard_input_response.result.prompt_messages is not None:
+            input = to_jsonable_python(guard_input_response.result.prompt_messages)
 
         openai_response: Response = super().create(  # type: ignore[misc]
             background=background,
@@ -953,8 +954,8 @@ class PangeaResponses(Responses):
         if guard_output_response.result.blocked:
             raise PangeaAIGuardBlockedError()
 
-        if guard_output_response.result.transformed and isinstance(guard_output_response.result.prompt_messages, list):
-            openai_response.output = guard_output_response.result.prompt_messages
+        if guard_output_response.result.transformed and guard_output_response.result.prompt_messages is not None:
+            openai_response.output = to_jsonable_python(guard_output_response.result.prompt_messages)
 
         return openai_response
 
@@ -1732,7 +1733,7 @@ class AsyncPangeaResponses(AsyncResponses):
             raise PangeaAIGuardBlockedError()
 
         if guard_input_response.result.transformed and isinstance(guard_input_response.result.prompt_messages, list):
-            input = guard_input_response.result.prompt_messages
+            input = to_jsonable_python(guard_input_response.result.prompt_messages)
 
         openai_response = await super().create(  # type: ignore[misc]
             background=background,
@@ -1786,6 +1787,6 @@ class AsyncPangeaResponses(AsyncResponses):
             raise PangeaAIGuardBlockedError()
 
         if guard_output_response.result.transformed and isinstance(guard_output_response.result.prompt_messages, list):
-            openai_response.output = guard_output_response.result.prompt_messages
+            openai_response.output = to_jsonable_python(guard_output_response.result.prompt_messages)
 
         return openai_response
