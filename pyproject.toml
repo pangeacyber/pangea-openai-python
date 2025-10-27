@@ -1,6 +1,6 @@
 [project]
 name = "pangea-openai"
-version = "0.2.1"
+version = "0.3.0"
 description = "A wrapper around the OpenAI Python library that wraps the Responses API with Pangea AI Guard"
 readme = "README.md"
 license = "Apache-2.0"
