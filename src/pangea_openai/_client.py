@@ -5,8 +5,8 @@ from typing import Any
 
 from openai import AsyncOpenAI, OpenAI
 from openai._compat import cached_property
-from pangea.asyncio.services import AIGuardAsync
-from pangea.services import AIGuard
+from pangea.asyncio.services import AIGuardAsync, RedactAsync
+from pangea.services import AIGuard, Redact
 from typing_extensions import override
 
 from pangea_openai._exceptions import PangeaError
@@ -35,6 +35,7 @@ class PangeaOpenAI(OpenAI):
             )
 
         self.ai_guard_client = AIGuard(token=pangea_api_key)
+        self.redact_client = Redact(token=pangea_api_key)
         self.pangea_input_recipe = pangea_input_recipe
         self.pangea_output_recipe = pangea_output_recipe
 
@@ -55,6 +56,7 @@ class AsyncPangeaOpenAI(AsyncOpenAI):
     ) -> None:
         super().__init__(**kwargs)
         self.ai_guard_client = AIGuardAsync(token=pangea_api_key)
+        self.redact_client = RedactAsync(token=pangea_api_key)
         self.pangea_input_recipe = pangea_input_recipe
         self.pangea_output_recipe = pangea_output_recipe
 

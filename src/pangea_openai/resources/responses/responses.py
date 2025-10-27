@@ -8,7 +8,7 @@ import httpx
 from openai import AsyncStream, NotGiven, Omit, Stream, not_given, omit
 from openai._types import Body, Headers, Query
 from openai.resources.responses import AsyncResponses, Responses
-from openai.types.responses import response_create_params
+from openai.types.responses import ResponseOutputMessage, ResponseOutputText, response_create_params
 from openai.types.responses.easy_input_message_param import EasyInputMessageParam
 from openai.types.responses.response import Response
 from openai.types.responses.response_code_interpreter_tool_call_param import ResponseCodeInterpreterToolCallParam
@@ -46,6 +46,7 @@ from openai.types.shared_params.metadata import Metadata
 from openai.types.shared_params.reasoning import Reasoning
 from openai.types.shared_params.responses_model import ResponsesModel
 from pangea.services.ai_guard import Message
+from pydantic import TypeAdapter
 from pydantic_core import to_jsonable_python
 from typing_extensions import assert_never, override
 
@@ -55,6 +56,9 @@ if TYPE_CHECKING:
     from pangea_openai._client import AsyncPangeaOpenAI, PangeaOpenAI
 
 __all__ = ("PangeaResponses", "AsyncPangeaResponses")
+
+
+list_message_adapter: TypeAdapter[list[Message]] = TypeAdapter(list[Message])
 
 
 def to_pangea_messages(item: ResponseInputItemParam) -> list[Message]:
@@ -937,15 +941,25 @@ class PangeaResponses(Responses):
             timeout=timeout,
         )
 
+        output_messages = [
+            Message(role=o.role, content=c.text)
+            for o in openai_response.output
+            if o.type == "message"
+            for c in o.content
+            if c.type == "output_text"
+        ]
+
+        # FPE unredact.
+        if guard_input_response.result.fpe_context is not None:
+            redact_response = self._client.redact_client.unredact(
+                output_messages,
+                fpe_context=guard_input_response.result.fpe_context,
+            )
+            assert redact_response.result is not None
+            output_messages = list_message_adapter.validate_python(redact_response.result.data)
+
         guard_output_response = self._client.ai_guard_client.guard_text(
-            messages=messages
-            + [
-                Message(role=o.role, content=c.text)
-                for o in openai_response.output
-                if o.type == "message"
-                for c in o.content
-                if c.type == "output_text"
-            ],
+            messages=messages + output_messages,
             recipe=self._client.pangea_output_recipe,
         )
 
@@ -955,7 +969,29 @@ class PangeaResponses(Responses):
             raise PangeaAIGuardBlockedError()
 
         if guard_output_response.result.transformed and guard_output_response.result.prompt_messages is not None:
-            openai_response.output = to_jsonable_python(guard_output_response.result.prompt_messages)
+            openai_response.output = [
+                ResponseOutputMessage(
+                    type="message",
+                    role="assistant",
+                    status="completed",
+                    id="",
+                    content=[ResponseOutputText(type="output_text", text=x.content, annotations=[])],
+                )
+                for x in guard_output_response.result.prompt_messages
+                if x.role == "assistant"
+            ]
+        elif guard_input_response.result.fpe_context is not None:
+            openai_response.output = [
+                ResponseOutputMessage(
+                    type="message",
+                    role="assistant",
+                    status="completed",
+                    id="",
+                    content=[ResponseOutputText(type="output_text", text=x.content, annotations=[])],
+                )
+                for x in output_messages
+                if x.role == "assistant"
+            ]
 
         return openai_response
 
@@ -1769,15 +1805,25 @@ class AsyncPangeaResponses(AsyncResponses):
             timeout=timeout,
         )
 
+        output_messages = [
+            Message(role=o.role, content=c.text)
+            for o in openai_response.output
+            if o.type == "message"
+            for c in o.content
+            if c.type == "output_text"
+        ]
+
+        # FPE unredact.
+        if guard_input_response.result.fpe_context is not None:
+            redact_response = await self._client.redact_client.unredact(
+                output_messages,
+                fpe_context=guard_input_response.result.fpe_context,
+            )
+            assert redact_response.result is not None
+            output_messages = list_message_adapter.validate_python(redact_response.result.data)
+
         guard_output_response = await self._client.ai_guard_client.guard_text(
-            messages=messages
-            + [
-                Message(role=o.role, content=c.text)
-                for o in openai_response.output
-                if o.type == "message"
-                for c in o.content
-                if c.type == "output_text"
-            ],
+            messages=messages + output_messages,
             recipe=self._client.pangea_output_recipe,
         )
 
@@ -1786,7 +1832,29 @@ class AsyncPangeaResponses(AsyncResponses):
         if guard_output_response.result.blocked:
             raise PangeaAIGuardBlockedError()
 
-        if guard_output_response.result.transformed and isinstance(guard_output_response.result.prompt_messages, list):
-            openai_response.output = to_jsonable_python(guard_output_response.result.prompt_messages)
+        if guard_output_response.result.transformed and guard_output_response.result.prompt_messages is not None:
+            openai_response.output = [
+                ResponseOutputMessage(
+                    type="message",
+                    role="assistant",
+                    status="completed",
+                    id="",
+                    content=[ResponseOutputText(type="output_text", text=x.content, annotations=[])],
+                )
+                for x in guard_output_response.result.prompt_messages
+                if x.role == "assistant"
+            ]
+        elif guard_input_response.result.fpe_context is not None:
+            openai_response.output = [
+                ResponseOutputMessage(
+                    type="message",
+                    role="assistant",
+                    status="completed",
+                    id="",
+                    content=[ResponseOutputText(type="output_text", text=x.content, annotations=[])],
+                )
+                for x in output_messages
+                if x.role == "assistant"
+            ]
 
         return openai_response
