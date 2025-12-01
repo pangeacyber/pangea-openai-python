@@ -20,6 +20,8 @@ from openai.types.responses.response_function_tool_call_param import ResponseFun
 from openai.types.responses.response_function_web_search_param import ResponseFunctionWebSearchParam
 from openai.types.responses.response_includable import ResponseIncludable
 from openai.types.responses.response_input_param import (
+    ApplyPatchCall,
+    ApplyPatchCallOutput,
     ComputerCallOutput,
     FunctionCallOutput,
     ImageGenerationCall,
@@ -32,6 +34,8 @@ from openai.types.responses.response_input_param import (
     McpListTools,
     ResponseInputItemParam,
     ResponseInputParam,
+    ShellCall,
+    ShellCallOutput,
 )
 from openai.types.responses.response_input_param import (
     Message as OpenAIMessage,
@@ -122,6 +126,14 @@ def to_pangea_messages(item: ResponseInputItemParam) -> list[Message]:
             return []
         case ItemReference() as msg:
             return []
+        case ShellCall() as msg:
+            return []
+        case ShellCallOutput() as msg:
+            return []
+        case ApplyPatchCall() as msg:
+            return []
+        case ApplyPatchCallOutput() as msg:
+            return []
         case _ as unhandled_item:
             assert_never(unhandled_item)
             return []
@@ -152,6 +164,7 @@ class PangeaResponses(Responses):
         previous_response_id: Optional[str] | Omit = omit,
         prompt: Optional[ResponsePromptParam] | Omit = omit,
         prompt_cache_key: str | Omit = omit,
+        prompt_cache_retention: Optional[Literal["in-memory", "24h"]] | Omit = omit,
         reasoning: Optional[Reasoning] | Omit = omit,
         safety_identifier: str | Omit = omit,
         service_tier: Optional[Literal["auto", "default", "flex", "scale", "priority"]] | Omit = omit,
@@ -267,6 +280,11 @@ class PangeaResponses(Responses):
           prompt_cache_key: Used by OpenAI to cache responses for similar requests to optimize your cache
               hit rates. Replaces the `user` field.
               [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
+
+          prompt_cache_retention: The retention policy for the prompt cache. Set to `24h` to enable extended
+              prompt caching, which keeps cached prefixes active for longer, up to a maximum
+              of 24 hours.
+              [Learn more](https://platform.openai.com/docs/guides/prompt-caching#prompt-cache-retention).
 
           reasoning: **gpt-5 and o-series models only**
 
@@ -390,6 +408,7 @@ class PangeaResponses(Responses):
         previous_response_id: Optional[str] | Omit = omit,
         prompt: Optional[ResponsePromptParam] | Omit = omit,
         prompt_cache_key: str | Omit = omit,
+        prompt_cache_retention: Optional[Literal["in-memory", "24h"]] | Omit = omit,
         reasoning: Optional[Reasoning] | Omit = omit,
         safety_identifier: str | Omit = omit,
         service_tier: Optional[Literal["auto", "default", "flex", "scale", "priority"]] | Omit = omit,
@@ -512,6 +531,11 @@ class PangeaResponses(Responses):
               hit rates. Replaces the `user` field.
               [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
 
+          prompt_cache_retention: The retention policy for the prompt cache. Set to `24h` to enable extended
+              prompt caching, which keeps cached prefixes active for longer, up to a maximum
+              of 24 hours.
+              [Learn more](https://platform.openai.com/docs/guides/prompt-caching#prompt-cache-retention).
+
           reasoning: **gpt-5 and o-series models only**
 
               Configuration options for
@@ -627,6 +651,7 @@ class PangeaResponses(Responses):
         previous_response_id: Optional[str] | Omit = omit,
         prompt: Optional[ResponsePromptParam] | Omit = omit,
         prompt_cache_key: str | Omit = omit,
+        prompt_cache_retention: Optional[Literal["in-memory", "24h"]] | Omit = omit,
         reasoning: Optional[Reasoning] | Omit = omit,
         safety_identifier: str | Omit = omit,
         service_tier: Optional[Literal["auto", "default", "flex", "scale", "priority"]] | Omit = omit,
@@ -749,6 +774,11 @@ class PangeaResponses(Responses):
               hit rates. Replaces the `user` field.
               [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
 
+          prompt_cache_retention: The retention policy for the prompt cache. Set to `24h` to enable extended
+              prompt caching, which keeps cached prefixes active for longer, up to a maximum
+              of 24 hours.
+              [Learn more](https://platform.openai.com/docs/guides/prompt-caching#prompt-cache-retention).
+
           reasoning: **gpt-5 and o-series models only**
 
               Configuration options for
@@ -863,6 +893,7 @@ class PangeaResponses(Responses):
         previous_response_id: Optional[str] | Omit = omit,
         prompt: Optional[ResponsePromptParam] | Omit = omit,
         prompt_cache_key: str | Omit = omit,
+        prompt_cache_retention: Optional[Literal["in-memory", "24h"]] | Omit = omit,
         reasoning: Optional[Reasoning] | Omit = omit,
         safety_identifier: str | Omit = omit,
         service_tier: Optional[Literal["auto", "default", "flex", "scale", "priority"]] | Omit = omit,
@@ -1016,6 +1047,7 @@ class AsyncPangeaResponses(AsyncResponses):
         previous_response_id: Optional[str] | Omit = omit,
         prompt: Optional[ResponsePromptParam] | Omit = omit,
         prompt_cache_key: str | Omit = omit,
+        prompt_cache_retention: Optional[Literal["in-memory", "24h"]] | Omit = omit,
         reasoning: Optional[Reasoning] | Omit = omit,
         safety_identifier: str | Omit = omit,
         service_tier: Optional[Literal["auto", "default", "flex", "scale", "priority"]] | Omit = omit,
@@ -1131,6 +1163,11 @@ class AsyncPangeaResponses(AsyncResponses):
           prompt_cache_key: Used by OpenAI to cache responses for similar requests to optimize your cache
               hit rates. Replaces the `user` field.
               [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
+
+          prompt_cache_retention: The retention policy for the prompt cache. Set to `24h` to enable extended
+              prompt caching, which keeps cached prefixes active for longer, up to a maximum
+              of 24 hours.
+              [Learn more](https://platform.openai.com/docs/guides/prompt-caching#prompt-cache-retention).
 
           reasoning: **gpt-5 and o-series models only**
 
@@ -1254,6 +1291,7 @@ class AsyncPangeaResponses(AsyncResponses):
         previous_response_id: Optional[str] | Omit = omit,
         prompt: Optional[ResponsePromptParam] | Omit = omit,
         prompt_cache_key: str | Omit = omit,
+        prompt_cache_retention: Optional[Literal["in-memory", "24h"]] | Omit = omit,
         reasoning: Optional[Reasoning] | Omit = omit,
         safety_identifier: str | Omit = omit,
         service_tier: Optional[Literal["auto", "default", "flex", "scale", "priority"]] | Omit = omit,
@@ -1376,6 +1414,11 @@ class AsyncPangeaResponses(AsyncResponses):
               hit rates. Replaces the `user` field.
               [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
 
+          prompt_cache_retention: The retention policy for the prompt cache. Set to `24h` to enable extended
+              prompt caching, which keeps cached prefixes active for longer, up to a maximum
+              of 24 hours.
+              [Learn more](https://platform.openai.com/docs/guides/prompt-caching#prompt-cache-retention).
+
           reasoning: **gpt-5 and o-series models only**
 
               Configuration options for
@@ -1491,6 +1534,7 @@ class AsyncPangeaResponses(AsyncResponses):
         previous_response_id: Optional[str] | Omit = omit,
         prompt: Optional[ResponsePromptParam] | Omit = omit,
         prompt_cache_key: str | Omit = omit,
+        prompt_cache_retention: Optional[Literal["in-memory", "24h"]] | Omit = omit,
         reasoning: Optional[Reasoning] | Omit = omit,
         safety_identifier: str | Omit = omit,
         service_tier: Optional[Literal["auto", "default", "flex", "scale", "priority"]] | Omit = omit,
@@ -1613,6 +1657,11 @@ class AsyncPangeaResponses(AsyncResponses):
               hit rates. Replaces the `user` field.
               [Learn more](https://platform.openai.com/docs/guides/prompt-caching).
 
+          prompt_cache_retention: The retention policy for the prompt cache. Set to `24h` to enable extended
+              prompt caching, which keeps cached prefixes active for longer, up to a maximum
+              of 24 hours.
+              [Learn more](https://platform.openai.com/docs/guides/prompt-caching#prompt-cache-retention).
+
           reasoning: **gpt-5 and o-series models only**
 
               Configuration options for
@@ -1727,6 +1776,7 @@ class AsyncPangeaResponses(AsyncResponses):
         previous_response_id: Optional[str] | Omit = omit,
         prompt: Optional[ResponsePromptParam] | Omit = omit,
         prompt_cache_key: str | Omit = omit,
+        prompt_cache_retention: Optional[Literal["in-memory", "24h"]] | Omit = omit,
         reasoning: Optional[Reasoning] | Omit = omit,
         safety_identifier: str | Omit = omit,
         service_tier: Optional[Literal["auto", "default", "flex", "scale", "priority"]] | Omit = omit,
